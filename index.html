@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>KL Prawns - Shop</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f8f8f8;
+    }
+    header {
+      background: #007B7F;
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+      cursor: pointer;
+    }
+    nav {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-size: 18px;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+    #searchBox {
+      margin-top: 10px;
+      padding: 6px 10px;
+      border-radius: 5px;
+      border: none;
+      width: 200px;
+    }
+    main {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 0 20px;
+    }
+    .products {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 20px;
+    }
+    .product-card {
+      background: white;
+      border-radius: 6px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+    }
+    .product-card img {
+      max-width: 100%;
+      height: 160px;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+    .product-info {
+      padding: 10px 0;
+      flex-grow: 1;
+    }
+    .product-info h3 {
+      margin: 0 0 8px 0;
+      font-size: 18px;
+      color: #007B7F;
+    }
+    .product-info p {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+      color: #555;
+    }
+    .product-price {
+      font-weight: bold;
+      color: #222;
+      margin-bottom: 10px;
+    }
+    .product-actions {
+      text-align: center;
+    }
+    button.add-to-cart {
+      background: #ffb400;
+      border: none;
+      padding: 10px 15px;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      color: #000;
+      width: 100%;
+      transition: background 0.3s ease;
+    }
+    button.add-to-cart:hover {
+      background: #e6a100;
+    }
+
+    /* Modal */
+    #cartModal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    #cartModal.active {
+      display: flex;
+    }
+    .cart-content {
+      background: white;
+      padding: 20px;
+      width: 400px;
+      max-height: 80vh;
+      overflow-y: auto;
+      border-radius: 8px;
+      position: relative;
+    }
+    .close-cart {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      font-size: 20px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #888;
+    }
+    .cart-items {
+      margin-bottom: 20px;
+    }
+    .cart-item {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+      margin-bottom: 10px;
+    }
+    .cart-total {
+      font-weight: bold;
+      text-align: right;
+      margin-bottom: 20px;
+      font-size: 18px;
+    }
+    form#bookingForm label {
+      font-weight: bold;
+      margin-bottom: 5px;
+      display: block;
+    }
+    form#bookingForm input, textarea {
+      width: 100%;
+      padding: 7px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    form#bookingForm button {
+      background: #007B7F;
+      color: white;
+      border: none;
+      padding: 10px;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    @media (max-width: 500px) {
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      #searchBox {
+        width: 100%;
+      }
+      .cart-content {
+        width: 90%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1 onclick="window.location.reload()">🦐 KL Prawns</h1>
+    <input type="text" id="searchBox" placeholder="Search..." oninput="filterProducts()" />
+    <nav>
+      <a href="#">🏠</a>
+      <a href="order.html">📦</a>
+      <a href="#">👤</a>
+      <a href="#">📝</a>
+      <a href="#">❤️</a>
+      <a href="#" onclick="openCart()" style="color: yellow;">🛒 (<span id="cartCount">0</span>)</a>
+    </nav>
+  </header>
+
+  <main>
+    <h2>Available Products</h2>
+    <div class="products" id="productsList"></div>
+  </main>
+
+  <!-- Cart Modal -->
+  <div id="cartModal">
+    <div class="cart-content">
+      <button class="close-cart" onclick="closeCart()">&times;</button>
+      <h2>Your Cart</h2>
+      <div class="cart-items" id="cartItems"></div>
+      <div class="cart-total" id="cartTotal">Total: ₹0</div>
+
+      <h3>Booking Details</h3>
+      <form id="bookingForm" onsubmit="submitOrder(event)">
+        <label for="username">Name</label>
+        <input type="text" id="username" required />
+        <label for="phone">Phone Number</label>
+        <input type="tel" id="phone" pattern="[0-9]{10}" required />
+        <label for="address">Address</label>
+        <textarea id="address" rows="2" required></textarea>
+        <label for="pin">PIN Code</label>
+        <input type="text" id="pin" pattern="[0-9]{6}" required />
+        <label for="state">State</label>
+        <input type="text" id="state" required />
+        <button type="submit">Confirm Booking</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const sampleProducts = [
+      { id: 1, name: "Fresh KL Prawns", price: 450, image: "https://images.unsplash.com/photo-1603031732364-5098727c1baf?auto=format&fit=crop&w=600&q=80", description: "Fresh prawns directly from KL waters. Price per KG." },
+      { id: 2, name: "Tiger Prawns", price: 600, image: "https://images.unsplash.com/photo-1562967916-eb82221dfb18?auto=format&fit=crop&w=600&q=80", description: "Large tiger prawns, fresh and juicy." },
+      { id: 3, name: "King Prawns", price: 800, image: "https://images.unsplash.com/photo-1590080877777-8dcd1b78c11d?auto=format&fit=crop&w=600&q=80", description: "Premium king prawns for special occasions." }
+    ];
+    let products = JSON.parse(localStorage.getItem("products")) || sampleProducts;
+    localStorage.setItem("products", JSON.stringify(products));
+
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+    const productsList = document.getElementById("productsList");
+    const cartCount = document.getElementById("cartCount");
+    const cartItemsContainer = document.getElementById("cartItems");
+    const cartTotalEl = document.getElementById("cartTotal");
+    const cartModal = document.getElementById("cartModal");
+
+    function renderProducts() {
+      productsList.innerHTML = "";
+      products.forEach(prod => {
+        const card = document.createElement("div");
+        card.className = "product-card";
+        card.innerHTML = `
+          <img src="${prod.image}" />
+          <div class="product-info">
+            <h3>${prod.name}</h3>
+            <p>${prod.description}</p>
+            <div class="product-price">₹${prod.price} / kg</div>
+          </div>
+          <div class="product-actions">
+            <button onclick="addToCart(${prod.id})" class="add-to-cart">Add to Cart</button>
+          </div>
+        `;
+        productsList.appendChild(card);
+      });
+    }
+
+    function filterProducts() {
+      const query = document.getElementById("searchBox").value.toLowerCase();
+      const filtered = products.filter(p => p.name.toLowerCase().includes(query) || p.description.toLowerCase().includes(query));
+      productsList.innerHTML = "";
+      filtered.forEach(prod => {
+        const card = document.createElement("div");
+        card.className = "product-card";
+        card.innerHTML = `
+          <img src="${prod.image}" />
+          <div class="product-info">
+            <h3>${prod.name}</h3>
+            <p>${prod.description}</p>
+            <div class="product-price">₹${prod.price} / kg</div>
+          </div>
+          <div class="product-actions">
+            <button onclick="addToCart(${prod.id})" class="add-to-cart">Add to Cart</button>
+          </div>
+        `;
+        productsList.appendChild(card);
+      });
+    }
+
+    function addToCart(id) {
+      const item = cart.find(i => i.id === id);
+      if (item) item.qty += 1;
+      else cart.push({ id, qty: 1 });
+      localStorage.setItem("cart", JSON.stringify(cart));
+      updateCartCount();
+      alert("Item added to cart!");
+    }
+
+    function updateCartCount() {
+      const total = cart.reduce((sum, item) => sum + item.qty, 0);
+      cartCount.textContent = total;
+    }
+
+    function openCart() {
+      renderCartItems();
+      cartModal.classList.add("active");
+    }
+
+    function closeCart() {
+      cartModal.classList.remove("active");
+    }
+
+    function renderCartItems() {
+      cartItemsContainer.innerHTML = "";
+      let total = 0;
+      cart.forEach(item => {
+        const prod = products.find(p => p.id === item.id);
+        const itemTotal = prod.price * item.qty;
+        total += itemTotal;
+        const div = document.createElement("div");
+        div.className = "cart-item";
+        div.innerHTML = `
+          <div>
+            <strong>${prod.name}</strong><br/>
+            ₹${prod.price} x ${item.qty} = ₹${itemTotal}
+          </div>
+          <div>
+            <button onclick="changeQty(${item.id}, 1)">+</button>
+            <button onclick="changeQty(${item.id}, -1)">-</button>
+            <button onclick="removeFromCart(${item.id})">❌</button>
+          </div>`;
+        cartItemsContainer.appendChild(div);
+      });
+      cartTotalEl.textContent = `Total: ₹${total}`;
+    }
+
+    function changeQty(id, delta) {
+      const item = cart.find(i => i.id === id);
+      if (!item) return;
+      item.qty += delta;
+      if (item.qty < 1) cart = cart.filter(i => i.id !== id);
+      localStorage.setItem("cart", JSON.stringify(cart));
+      renderCartItems();
+      updateCartCount();
+    }
+
+    function removeFromCart(id) {
+      cart = cart.filter(i => i.id !== id);
+      localStorage.setItem("cart", JSON.stringify(cart));
+      renderCartItems();
+      updateCartCount();
+    }
+
+    function submitOrder(e) {
+      e.preventDefault();
+      const username = document.getElementById("username").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+      const address = document.getElementById("address").value.trim();
+      const pin = document.getElementById("pin").value.trim();
+      const state = document.getElementById("state").value.trim();
+
+      if (!username || !phone || !address || !pin || !state) {
+        alert("Please fill in all booking details.");
+        return;
+      }
+
+      const order = {
+        id: Date.now(),
+        username, phone, address, pin, state,
+        items: cart.map(item => {
+          const p = products.find(prod => prod.id === item.id);
+          return { ...p, qty: item.qty };
+        }),
+        time: new Date().toISOString()
+      };
+
+      let orders = JSON.parse(localStorage.getItem("orders")) || [];
+      orders.push(order);
+      localStorage.setItem("orders", JSON.stringify(orders));
+
+      cart = [];
+      localStorage.setItem("cart", JSON.stringify(cart));
+      updateCartCount();
+      closeCart();
+      e.target.reset();
+      alert("Order placed! Admin will confirm soon.");
+    }
+
+    renderProducts();
+    updateCartCount();
+  </script>
+</body>
+</html>
